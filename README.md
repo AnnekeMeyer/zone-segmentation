@@ -1,13 +1,10 @@
 # Zonal Segmentation of the Prostate
-Segmentation of prostatic zones (peripheral zone, central gland, AFS and distal prostatic urethra )
-Sourcecode of the publication: 'Towards Patient-Individual PI-RADS v2 Sector Map: CNN for Automatic Segmentation of Prostatic Zones
-fror T2-Weighted MRI' (ISBI 2019. Preprint can be found in this repository. 
+This repository enables the segmentation of prostatic zones (peripheral zone, central gland, AFS and distal prostatic urethra) from T2-weighted MRI. The work was published in 'Towards Patient-Individual PI-RADS v2 Sector Map: CNN for Automatic Segmentation of Prostatic Zones ror T2-Weighted MRI' (ISBI 2019) Preprint can be found in this repository. 
 
-sourcecode of multi-planar prostate segmentation (ISBI publication in 2018)
 
 ## Algorithm description
 Details on the algorithm can be found in the attached paper. The inputs for the preprocessing of the algorithm are the three orthogonal T2-weighted volumes (transversal, coronal and sagittal). They are used to create a ROI that contains the prostate gland. For the CNN only the transversal ROI is of imprortance, the other volumes are not needed. If multi-planar data is not available, the ROI can also be extracted in other ways, e.g. interactively or with a detection algorithm. But this needs to be implemented in future. 
-ata used in this research was obtained from the ProstateX Challenge [1-3]. The outputs of the algorithm are the transversal ROI and the zonal segmentation for this ROI.
+Data used in this research was obtained from the ProstateX Challenge [1-3]. The outputs of the algorithm are the transversal ROI and the zonal segmentation for this ROI.
 To start the segmentation process, run Unet_zones.py.
 
 ## Further remarks
