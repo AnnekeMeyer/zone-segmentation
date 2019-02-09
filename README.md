@@ -1,4 +1,4 @@
-# zone-segmentation
+# Zonal Segmentation of the Prostate
 Segmentation of prostatic zones (peripheral zone, central gland, AFS and distal prostatic urethra )
 Sourcecode of the publication: 'Towards Patient-Individual PI-RADS v2 Sector Map: CNN for Automatic Segmentation of Prostatic Zones
 fror T2-Weighted MRI' (ISBI 2019. Preprint can be found in this repository. 
