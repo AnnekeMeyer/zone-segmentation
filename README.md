@@ -12,7 +12,7 @@ To start the segmentation process, run Unet_zones.py.
 The model was trained on publicly available data from The Cancer Imaging Archive (TCIA) sponsored by the SPIE, NCI/NIH, AAPM, and Radboud University [1]. Whether it works on other data has not been tested yet. 
 
 We uploaded the ground truth segmentations created for this work at: http://isgwww.cs.uni-magdeburg.de/cas/isbi2019.
-If you use this data for your research, please cite our publication: \n
+If you use this data for your research, please cite our publication:  
 A. Meyer, M. Rak, D. Schindele, S. Blaschke, M. Schostak, A. Fedorov, C. Hansen. "Towards patient-individual PI-Rads v2 sector map: CNN for automatic segmentation of prostatic zones from T2-weighted MRI". IEEE 16th International Symposium on Biomedical Imaging (ISBI 2019), pp 696-700
 
 TWe would like to thank the NVIDIA Corporation for donating the Titan Xp used for this research.
