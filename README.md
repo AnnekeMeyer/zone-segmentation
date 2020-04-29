@@ -1,5 +1,5 @@
 # Zonal Segmentation of the Prostate
-This repository enables the segmentation of prostatic zones (peripheral zone, central gland, AFS and distal prostatic urethra) from T2-weighted MRI. The work was published in 'Towards Patient-Individual PI-RADS v2 Sector Map: CNN for Automatic Segmentation of Prostatic Zones ror T2-Weighted MRI' (ISBI 2019) Preprint can be found in this repository.
+This repository enables the segmentation of prostatic zones (peripheral zone, central gland, AFS and distal prostatic urethra) from T2-weighted MRI. The work was published in **'Towards Patient-Individual PI-RADS v2 Sector Map: CNN for Automatic Segmentation of Prostatic Zones ror T2-Weighted MRI' (ISBI 2019).** The preprint can be found in this repository.
 
 
 ## Algorithm description
@@ -10,11 +10,11 @@ To start the segmentation process, run Unet_zones.py.
 
 ## Further remarks
 We uploaded the ground truth segmentations created in this work (for 98 Prostate-X T2w axial cases) at: http://isgwww.cs.uni-magdeburg.de/cas/isbi2019.
-If you use this data in your research, please cite our publication:<br/>
+**If you use this data or our trained model for your research, please cite our publication:**<br/>
 A. Meyer, M. Rak, D. Schindele, S. Blaschke, M. Schostak, A. Fedorov, C. Hansen. "Towards patient-individual PI-Rads v2 sector map: CNN for automatic segmentation of prostatic zones from T2-weighted MRI". IEEE 16th International Symposium on Biomedical Imaging (ISBI 2019), pp 696-700
 
 The model was trained on publicly available data from The Cancer Imaging Archive (TCIA) sponsored by the SPIE, NCI/NIH, AAPM, and Radboud University [1]. Whether it works on other data has not been tested yet.<br/>
-TWe would like to thank the NVIDIA Corporation for donating the Titan Xp used for this research.
+We would like to thank the NVIDIA Corporation for donating the Titan Xp used for this research.
 
 
 [1] G. Litjens, O. Debats, J. Barentsz, N. Karssemeijer, and H. Huisman. "ProstateX Challenge data", The Cancer Imaging Archive (2017). https://doi.org/10.7937/K9TCIA.2017.MURS5CL <br/>
