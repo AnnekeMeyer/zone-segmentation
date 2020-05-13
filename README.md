@@ -9,6 +9,9 @@ Data used in this research was obtained from the ProstateX Challenge [1-3]. The 
 To start the segmentation process, run Unet_zones.py.
 
 ## Reuse of Data, Model and Sourcecode
+
+For **commercial use**, please contact: office@isg.cs.uni-magdeburg.de
+
 We uploaded the ground truth segmentations created in this work (for 98 Prostate-X T2w axial cases) at: http://isgwww.cs.uni-magdeburg.de/cas/isbi2019.
 **If you use this data or our trained model for your research, please cite our publication:**<br/>
 *A. Meyer, M. Rak, D. Schindele, S. Blaschke, M. Schostak, A. Fedorov, C. Hansen. "Towards patient-individual PI-Rads v2 sector map: CNN for automatic segmentation of prostatic zones from T2-weighted MRI". IEEE 16th International Symposium on Biomedical Imaging (ISBI 2019), pp 696-700.*
