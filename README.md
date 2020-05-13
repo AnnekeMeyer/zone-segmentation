@@ -1,8 +1,9 @@
 # Zonal Segmentation of the Prostate
 
+This repository enables the segmentation of prostatic zones (peripheral zone, central gland, AFS and distal prostatic urethra) from T2-weighted MRI. The work was published in **'Towards Patient-Individual PI-RADS v2 Sector Map: CNN for Automatic Segmentation of Prostatic Zones ror T2-Weighted MRI' (ISBI 2019).** The preprint can be found in this repository.
+
 ![Visual Results](visResultsx3_2exp.PNG)
 
-This repository enables the segmentation of prostatic zones (peripheral zone, central gland, AFS and distal prostatic urethra) from T2-weighted MRI. The work was published in **'Towards Patient-Individual PI-RADS v2 Sector Map: CNN for Automatic Segmentation of Prostatic Zones ror T2-Weighted MRI' (ISBI 2019).** The preprint can be found in this repository.
 
 
 ## Algorithm description
