@@ -290,8 +290,6 @@ def resample_array_segmentations_shapeBasedInterpolation(segm_array):
         for x in range(0, 168):
             for y in range(0, 168):
                 for z in range(0, 168):
-                    if x==83 and y == 96 and z == 96:
-                        print('keks')
                     # print(pz_dis.GetPixel(x,y,z),cz_dis.GetPixel(x,y,z),us_dis.GetPixel(x,y,z), afs_dis.GetPixel(x,y,z))
                     array = [pz_dis.GetPixel(x, y, z), cz_dis.GetPixel(x, y, z), bg_dis.GetPixel(x, y, z)]
                     maxValue = max(array)
