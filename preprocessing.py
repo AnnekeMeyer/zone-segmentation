@@ -138,11 +138,11 @@ def getROI(inputDir):
     for file in files:
 
         # load images
-        if 'tse_tra.nrrd' in file:
+        if 'tra.nrrd' in file:
             img_tra = sitk.ReadImage(os.path.join(inputDir, file))
-        if 'tse_cor.nrrd' in file:
+        if 'cor.nrrd' in file:
             img_cor = sitk.ReadImage(os.path.join(inputDir, file))
-        if 'tse_sag.nrrd' in file:
+        if 'sag.nrrd' in file:
             img_sag = sitk.ReadImage(os.path.join(inputDir, file))
 
     # preprocess and save to numpy array
@@ -199,6 +199,80 @@ def preprocessImage(imgDir):
     arr = createAnisotropicArray(input_img= roi_tra)
 
     return arr
+
+def maskImage(upsampled_tra, cor, sag, GT):
+
+    res_cor = utils.resampleToReference(cor, upsampled_tra, sitk.sitkLinear, defaultValue=-1)
+    res_sag = utils.resampleToReference(sag, upsampled_tra, sitk.sitkLinear, defaultValue=-1)
+    mask_cor = sitk.BinaryThreshold(res_cor, -1, 0.01, 1, 0)
+    mask_sag = sitk.BinaryThreshold(res_sag, -1, 0.01, 1, 0)
+
+    # mask images
+    tra = sitk.Multiply(upsampled_tra, mask_cor)
+    tra = sitk.Multiply(tra, mask_sag)
+
+    cor = sitk.Multiply(res_cor, mask_sag)
+    sag = sitk.Multiply(res_sag, mask_cor)
+
+    GT = sitk.Multiply(GT, mask_cor)
+    GT = sitk.Multiply(GT, mask_sag)
+
+
+
+    return tra, cor, sag, GT
+
+def resample_segmentations(pred_img, ref_image):
+
+    pz = sitk.BinaryThreshold(pred_img, 1,1)
+    cz = sitk.BinaryThreshold(pred_img, 2,2)
+    us = sitk.BinaryThreshold(pred_img, 3,3)
+    afs = sitk.BinaryThreshold(pred_img, 4,4)
+    bg = sitk.BinaryThreshold(pred_img, 0,0)
+
+    # calculate distance transformations for segments and resample to reference space
+    pz_dis = utils.resampleToReference(sitk.SignedMaurerDistanceMap(pz, insideIsPositive=True, squaredDistance=False,
+                                          useImageSpacing=True), ref_image, sitk.sitkLinear, -3000)
+    pz_dis = sitk.DiscreteGaussian(pz_dis, 1.0)
+
+    cz_dis = utils.resampleToReference(sitk.SignedMaurerDistanceMap(cz, insideIsPositive=True, squaredDistance=False,
+                                          useImageSpacing=True), ref_image, sitk.sitkLinear, -3000)
+    cz_dis = sitk.DiscreteGaussian(cz_dis, 1.0)
+
+    us_dis = utils.resampleToReference(sitk.SignedMaurerDistanceMap(us, insideIsPositive=True, squaredDistance=False,
+                                          useImageSpacing=True), ref_image, sitk.sitkLinear, -3000)
+    us_dis = sitk.DiscreteGaussian(us_dis, 1.0)
+
+    afs_dis = utils.resampleToReference(sitk.SignedMaurerDistanceMap(afs, insideIsPositive=True, squaredDistance=False,
+                                          useImageSpacing=True), ref_image, sitk.sitkLinear, -3000)
+    afs_dis = sitk.DiscreteGaussian(afs_dis, 1.0)
+
+    bg_dis = utils.resampleToReference(sitk.SignedMaurerDistanceMap(bg, insideIsPositive=True, squaredDistance=False,
+                                           useImageSpacing=True), ref_image, sitk.sitkLinear,-3000)
+    bg_dis = sitk.DiscreteGaussian(bg_dis, 1.0)
+
+    ref_size = ref_image.GetSize()
+    final_GT = np.zeros([ref_size[2], ref_size[1], ref_size[0]])
+
+    for x in range(0, ref_image.GetSize()[0]):
+        for y in range(0, ref_image.GetSize()[1]):
+            for z in range(0, ref_image.GetSize()[2]):
+                array = [bg_dis.GetPixel(x, y, z), pz_dis.GetPixel(x, y, z), cz_dis.GetPixel(x, y, z), us_dis.GetPixel(x, y, z),
+                         afs_dis.GetPixel(x, y, z)]
+                maxValue = max(array)
+                if maxValue == -3000:
+                    final_GT[z, y, x]=5
+                else:
+                    max_index = array.index(maxValue)
+                    final_GT[z, y, x] = max_index
+                    # print(x,y,z)
+                    # print( maxValue)
+    final_GT_img = sitk.GetImageFromArray(final_GT)
+    final_GT_img = sitk.Threshold(final_GT_img, 1,5,0)
+    final_GT_img.CopyInformation(ref_image)
+
+    sitk.WriteImage(final_GT_img, 'prediction.nrrd')
+
+    return final_GT_img
 
 
 if __name__ == '__main__':

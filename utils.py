@@ -430,23 +430,3 @@ def convertArrayToMuliLabelImage(arr, templateImg):
 
     return output_image
 
-
-
-
-
-
-# arbitrary main funtions
-if __name__ == '__main__':
-
-    outputDir = 'C:/Users/anneke/Documents/Boston/2017-11 ZonesData_onlyTra/'
-    inputDir = 'D:/Daten/Prostate/Prostate Zones/zone segmentation slicer/'
-
-
-    cases = os.listdir(inputDir)
-
-    for case in cases:
-        print(case)
-        if not os.path.exists(outputDir+case):
-            os.makedirs(outputDir+case)
-        copyfile(inputDir+case+'/tra_upsampled.nrrd', outputDir+case+'/tra_upsampled.nrrd')
-        copyfile(inputDir+case+'/Segmentation-label.nrrd', outputDir+case+'/Segmentation-label.nrrd')
