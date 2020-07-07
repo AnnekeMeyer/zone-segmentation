@@ -407,6 +407,7 @@ def removeIslands(predictedArray):
     return finalPrediction
 
 
+
 def convertArrayToMuliLabelImage(arr, templateImg):
 
     output_image = sitk.Image(templateImg.GetSize(), sitk.sitkUInt8)
@@ -430,3 +431,58 @@ def convertArrayToMuliLabelImage(arr, templateImg):
 
     return output_image
 
+def resample_segmentations(pred_img, ref_image, smooth_distances=False):
+
+    pz = sitk.BinaryThreshold(pred_img, 1,1)
+    cz = sitk.BinaryThreshold(pred_img, 2,2)
+    us = sitk.BinaryThreshold(pred_img, 3,3)
+    afs = sitk.BinaryThreshold(pred_img, 4,4)
+    bg = sitk.BinaryThreshold(pred_img, 0,0)
+
+    # calculate distance transformations for segments and resample to reference space
+    pz_dis = resampleToReference(sitk.SignedMaurerDistanceMap(pz, insideIsPositive=True, squaredDistance=False,
+                                          useImageSpacing=True), ref_image, sitk.sitkLinear, -3000)
+    if smooth_distances:
+        pz_dis = sitk.DiscreteGaussian(pz_dis, 1.0)
+
+    cz_dis = resampleToReference(sitk.SignedMaurerDistanceMap(cz, insideIsPositive=True, squaredDistance=False,
+                                          useImageSpacing=True), ref_image, sitk.sitkLinear, -3000)
+    if smooth_distances:
+        cz_dis = sitk.DiscreteGaussian(cz_dis, 1.0)
+
+    us_dis = resampleToReference(sitk.SignedMaurerDistanceMap(us, insideIsPositive=True, squaredDistance=False,
+                                          useImageSpacing=True), ref_image, sitk.sitkLinear, -3000)
+    if smooth_distances:
+        us_dis = sitk.DiscreteGaussian(us_dis, 1.0)
+
+    afs_dis = resampleToReference(sitk.SignedMaurerDistanceMap(afs, insideIsPositive=True, squaredDistance=False,
+                                          useImageSpacing=True), ref_image, sitk.sitkLinear, -3000)
+    if smooth_distances:
+        afs_dis = sitk.DiscreteGaussian(afs_dis, 1.0)
+
+    bg_dis = resampleToReference(sitk.SignedMaurerDistanceMap(bg, insideIsPositive=True, squaredDistance=False,
+                                           useImageSpacing=True), ref_image, sitk.sitkLinear,-3000)
+    if smooth_distances:
+        bg_dis = sitk.DiscreteGaussian(bg_dis, 1.0)
+
+    ref_size = ref_image.GetSize()
+    final_GT = np.zeros([ref_size[2], ref_size[1], ref_size[0]])
+
+    for x in range(0, ref_image.GetSize()[0]):
+        for y in range(0, ref_image.GetSize()[1]):
+            for z in range(0, ref_image.GetSize()[2]):
+                array = [bg_dis.GetPixel(x, y, z), pz_dis.GetPixel(x, y, z), cz_dis.GetPixel(x, y, z), us_dis.GetPixel(x, y, z),
+                         afs_dis.GetPixel(x, y, z)]
+                maxValue = max(array)
+                if maxValue == -3000:
+                    final_GT[z, y, x]=5
+                else:
+                    max_index = array.index(maxValue)
+                    final_GT[z, y, x] = max_index
+                    # print(x,y,z)
+                    # print( maxValue)
+    final_GT_img = sitk.GetImageFromArray(final_GT)
+    final_GT_img = sitk.Threshold(final_GT_img, 1,4,0)
+    final_GT_img.CopyInformation(ref_image)
+
+    return final_GT_img
