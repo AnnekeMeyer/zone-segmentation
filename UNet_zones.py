@@ -6,8 +6,7 @@ import preprocessing
 import evaluation
 import SimpleITK as sitk
 from keras import backend as K
-K.set_image_data_format('channels_last')  # TF dimension ordering in this code
-
+K.set_image_data_format('channels_last')
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
 from keras.models import Model
@@ -23,8 +22,8 @@ class anisotopic_UNET:
             y_true_f = K.flatten(y_true)
             y_pred_f = K.flatten(y_pred)
             intersection = K.sum(y_true_f * y_pred_f)
-            G_P = alpha * K.sum((1 - y_true_f) * y_pred_f)  # G not P
-            P_G = beta * K.sum(y_true_f * (1 - y_pred_f))  # P not G
+            G_P = alpha * K.sum((1 - y_true_f) * y_pred_f) 
+            P_G = beta * K.sum(y_true_f * (1 - y_pred_f)) 
             return (intersection + smooth) / (intersection + smooth + G_P + P_G)
 
         def Tversky_loss(y_true, y_pred):
