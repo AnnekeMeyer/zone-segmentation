@@ -60,7 +60,7 @@ def normalizeIntensitiesPercentile(*imgs):
 
     upperPerc = np.percentile(array, 99) #98
     lowerPerc = np.percentile(array, 1) #2
-    print(lowerPerc)
+    #print(lowerPerc)
 
     castImageFilter = sitk.CastImageFilter()
     castImageFilter.SetOutputPixelType(sitk.sitkFloat32)
@@ -169,7 +169,7 @@ def castImage(img, type):
 
     return out
 
-# corrects the size of an image to a multiple of the factor
+# corrects the size of an image to a multiple of the factor. Not fully tested yet
 def sizeCorrectionImage(img, factor, imgSize):
 # assumes that input image size is larger than minImgSize, except for z-dimension
 # factor is important in order to resample image by 1/factor (e.g. due to slice thickness) without any errors
@@ -207,17 +207,52 @@ def sizeCorrectionImage(img, factor, imgSize):
     # if correction is necessary, increase size of image with padding
     if correction:
         filter = sitk.ConstantPadImageFilter()
-        print([math.ceil(cX/2), math.ceil(cY), math.ceil(cZ/2)])
+        #print([math.ceil(cX/2), math.ceil(cY), math.ceil(cZ/2)])
         filter.SetPadLowerBound([int(math.floor(cX/2)), int(math.floor(cY/2)), int(math.floor(cZ/2))])
         filter.SetPadUpperBound([int(math.ceil(cX/2)), int(math.ceil(cY)), int(math.ceil(cZ/2))])
         filter.SetConstant(-4)
         outPadding = filter.Execute(img)
-        print('outPaddingSize', outPadding.GetSize())
+        #print('outPaddingSize', outPadding.GetSize())
         return outPadding
 
     else:
         return img
 
+
+def crop_and_padd_sitk(inputImage, newSize):
+
+    inSize = inputImage.GetSize()
+    # print(inSize)
+    array = sitk.GetArrayFromImage(inputImage)
+    minValue = array.min()
+    diff = np.array(newSize) - np.array(inSize)
+    padd = np.absolute(diff * (diff >= 0).astype(np.float32))
+    crop = np.absolute(diff * (diff < 0).astype(np.float32))
+    fl = lambda x: x // 2
+    crop_lower = fl(crop).astype(np.int16)
+    crop_upper = np.where((crop % 2) == 0, crop // 2, (crop // 2) + 1).astype(np.int16)
+    padd_lower = fl(padd).astype(np.int16)
+    padd_upper = np.where((padd % 2) == 0, padd // 2, (padd // 2) + 1).astype(np.int16)
+    # print(crop_lower, crop_upper)
+    # print(padd_lower, padd_upper)
+    cropFilter = sitk.CropImageFilter()
+    cropFilter.SetLowerBoundaryCropSize(crop_lower.tolist())
+    cropFilter.SetUpperBoundaryCropSize(crop_upper.tolist())
+    croppedImg = cropFilter.Execute(inputImage)
+
+    filter = sitk.ConstantPadImageFilter()
+    filter.SetPadLowerBound(padd_lower.tolist())
+    filter.SetPadUpperBound(padd_upper.tolist())
+    filter.SetConstant(int(minValue))
+    paddedImg = filter.Execute(croppedImg)
+
+    # print(paddedImg.GetSize())
+    # if list(paddedImg.GetSize()) != newSize:
+    #     print(paddedImg.GetSize(), "!=", newSize)
+    #
+    #
+    #     raise ValueError()
+    return paddedImg
 
 
 def getBoundingBox(img):
@@ -290,6 +325,8 @@ def resample_array_segmentations_shapeBasedInterpolation(segm_array):
         for x in range(0, 168):
             for y in range(0, 168):
                 for z in range(0, 168):
+                    if x==83 and y == 96 and z == 96:
+                        print('keks')
                     # print(pz_dis.GetPixel(x,y,z),cz_dis.GetPixel(x,y,z),us_dis.GetPixel(x,y,z), afs_dis.GetPixel(x,y,z))
                     array = [pz_dis.GetPixel(x, y, z), cz_dis.GetPixel(x, y, z), bg_dis.GetPixel(x, y, z)]
                     maxValue = max(array)
@@ -405,7 +442,6 @@ def removeIslands(predictedArray):
     return finalPrediction
 
 
-
 def convertArrayToMuliLabelImage(arr, templateImg):
 
     output_image = sitk.Image(templateImg.GetSize(), sitk.sitkUInt8)
@@ -428,6 +464,8 @@ def convertArrayToMuliLabelImage(arr, templateImg):
     #sitk.WriteImage(output_image, 'output.nrrd')
 
     return output_image
+
+
 
 def resample_segmentations(pred_img, ref_image, smooth_distances=False):
 
@@ -484,3 +522,22 @@ def resample_segmentations(pred_img, ref_image, smooth_distances=False):
     final_GT_img.CopyInformation(ref_image)
 
     return final_GT_img
+
+
+
+
+# arbitrary main funtions
+if __name__ == '__main__':
+
+    outputDir = 'C:/Users/anneke/Documents/Boston/2017-11 ZonesData_onlyTra/'
+    inputDir = 'D:/Daten/Prostate/Prostate Zones/zone segmentation slicer/'
+
+
+    cases = os.listdir(inputDir)
+
+    for case in cases:
+        print(case)
+        if not os.path.exists(outputDir+case):
+            os.makedirs(outputDir+case)
+        copyfile(inputDir+case+'/tra_upsampled.nrrd', outputDir+case+'/tra_upsampled.nrrd')
+        copyfile(inputDir+case+'/Segmentation-label.nrrd', outputDir+case+'/Segmentation-label.nrrd')
