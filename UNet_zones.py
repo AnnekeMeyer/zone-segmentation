@@ -238,7 +238,7 @@ if __name__ == '__main__':
         pred_img = utils.convertArrayToMuliLabelImage(pred_arr, templateImg = roi_tra)
 
         # resmaple to original axial image with shape based interpolation
-        orig_tra_name = glob.glob(os.path.join('data_andrea', case, '*ax*.hdr'))[0]
+        orig_tra_name = glob.glob(os.path.join('data-test', case, '*tra.nrrd'))[0]
         orig_tra = sitk.ReadImage(orig_tra_name)
         pred_img = utils.resample_segmentations(pred_img, orig_tra, smooth_distances=True)
         sitk.WriteImage(pred_img, os.path.join(dir, case, 'zones_label.hdr'))
