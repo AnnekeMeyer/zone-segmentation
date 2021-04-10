@@ -221,7 +221,6 @@ if __name__ == '__main__':
     network = anisotopic_UNET()
     model = network.get_net(bn=True, do=False)
     model.load_weights('model/model.h5')
-    # model.load_weights('model/uats_softmax_F1_Perct_Labelled_1.0.h5')
 
 
     for case in cases:
