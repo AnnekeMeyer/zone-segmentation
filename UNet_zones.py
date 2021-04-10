@@ -3,15 +3,18 @@ import numpy as np
 import os
 import utils
 import preprocessing
-import evaluation
+#import evaluation
 import SimpleITK as sitk
 from keras import backend as K
-K.set_image_data_format('channels_last')
+K.set_image_data_format('channels_last')  # TF dimension ordering in this code
+
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
 from keras.models import Model
 from keras.layers import concatenate, Input, Conv3D, MaxPooling3D, Conv3DTranspose, Lambda, \
     BatchNormalization, Dropout
+# import plot_upsampled_segmentations
+import glob
 
 smooth = 1.
 
@@ -22,8 +25,8 @@ class anisotopic_UNET:
             y_true_f = K.flatten(y_true)
             y_pred_f = K.flatten(y_pred)
             intersection = K.sum(y_true_f * y_pred_f)
-            G_P = alpha * K.sum((1 - y_true_f) * y_pred_f) 
-            P_G = beta * K.sum(y_true_f * (1 - y_pred_f)) 
+            G_P = alpha * K.sum((1 - y_true_f) * y_pred_f)  # G not P
+            P_G = beta * K.sum(y_true_f * (1 - y_pred_f))  # P not G
             return (intersection + smooth) / (intersection + smooth + G_P + P_G)
 
         def Tversky_loss(y_true, y_pred):
@@ -191,12 +194,16 @@ def train_model(epochs, learningRate, imgs, gt_list, val_imgs, val_gt_list, fold
     return history
 
 
-def predict(img_arr, modelName):
+def predict(img_arr, modelName= '', model = None):
 
-    network = anisotopic_UNET()
-    model = network.get_net(bn=True, do=False)
-    model.load_weights(modelName)
-    prediction = model.predict([img_arr], batch_size=2, verbose=1)
+    if model == None:
+        network = anisotopic_UNET()
+        model = network.get_net(bn=True, do=False)
+        model.load_weights(modelName)
+        prediction = model.predict([img_arr], batch_size=2, verbose=1)
+    else:
+        prediction = model.predict([img_arr], batch_size=2, verbose=1)
+
 
     #np.save(os.path.join(out_dir, 'predicted_'+ modelName[:-3] + '.npy'), out)
 
@@ -206,18 +213,38 @@ def predict(img_arr, modelName):
 if __name__ == '__main__':
 
 
-    # input directory that contains three orthogonal images (tra, sag, cor), which are needed for preprocessing
-    inputDir = 'data-test/ProstateX-0217'
-    arr = preprocessing.preprocessImage(inputDir)
-    pred_arr = predict(arr, modelName = 'model/model.h5')
-    pred_arr = np.asarray(pred_arr)
 
-    roi_tra = sitk.ReadImage(os.path.join(inputDir, 'roi_tra.nrrd'))
+  # input directory that contains three orthogonal images (tra, sag, cor), which are needed for preprocessing
+    dir = 'data-test/'
+    cases = os.listdir(dir)
 
-    # removes isolated segments from prediction
-    pred_arr = utils.removeIslands(pred_arr[:,0,:,:,:])
-    # convert to SimpleITK image. Zone affiliation is marked by intensity value (pz=1, cz=2, us=3, afs=4)
-    pred_img = utils.convertArrayToMuliLabelImage(pred_arr, templateImg = roi_tra)
+    network = anisotopic_UNET()
+    model = network.get_net(bn=True, do=False)
+    model.load_weights('model/model.h5')
+    # model.load_weights('model/uats_softmax_F1_Perct_Labelled_1.0.h5')
 
-    sitk.WriteImage(pred_img, os.path.join(inputDir, 'predicted_roi.nrrd'))
+
+    for case in cases:
+        print(case)
+        inputDir = os.path.join(dir, case)
+        roi_tra, arr = preprocessing.preprocessImage(inputDir)
+        pred_arr = predict(arr, model = model)
+        pred_arr = np.asarray(pred_arr)
+
+        print('... postprocess prediction ...')
+        # removes isolated segments from prediction
+        pred_arr = utils.removeIslands(pred_arr[:,0,:,:,:])
+
+        # convert to SimpleITK image. Zone affiliation is marked by intensity value (pz=1, cz=2, us=3, afs=4)
+        pred_img = utils.convertArrayToMuliLabelImage(pred_arr, templateImg = roi_tra)
+
+        # resmaple to original axial image with shape based interpolation
+        orig_tra_name = glob.glob(os.path.join('data_andrea', case, '*ax*.hdr'))[0]
+        orig_tra = sitk.ReadImage(orig_tra_name)
+        pred_img = utils.resample_segmentations(pred_img, orig_tra, smooth_distances=True)
+        sitk.WriteImage(pred_img, os.path.join(dir, case, 'zones_label.hdr'))
+
+        # # high resolution segmentaion
+        # pred_res_img = plot_upsampled_segmentations.resampleZonalSegmentation(roi_tra, pred_img)
+        # sitk.WriteImage(pred_res_img, os.path.join(dir, case, 'prediction_label_HR.nrrd'))
 
