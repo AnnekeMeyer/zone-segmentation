@@ -52,7 +52,8 @@ def getCroppedIsotropicImgs(*imgs):
 
     # upsample transversal image to isotropic voxel size (isotropic transversal image coordinate system is used as reference coordinate system)
     tra_HR = utils.resampleImage(img_tra, [0.5, 0.5, 0.5], sitk.sitkLinear,0)
-    tra_HR = utils.sizeCorrectionImage(tra_HR, factor=6, imgSize=168)
+    # tra_HR = utils.sizeCorrectionImage(tra_HR, factor=6, imgSize=168)
+    tra_HR = utils.crop_and_padd_sitk(tra_HR, [168, 168, 168])
 
     # resample coronal and sagittal to tra_HR space
     # resample coronal to tra_HR and obtain mask (voxels that are defined in coronal image )
@@ -138,11 +139,11 @@ def getROI(inputDir):
     for file in files:
 
         # load images
-        if 'tra.nrrd' in file:
+        if 'tra' in file or 'ax' in file:
             img_tra = sitk.ReadImage(os.path.join(inputDir, file))
-        if 'cor.nrrd' in file:
+        if 'cor' in file:
             img_cor = sitk.ReadImage(os.path.join(inputDir, file))
-        if 'sag.nrrd' in file:
+        if 'sag' in file:
             img_sag = sitk.ReadImage(os.path.join(inputDir, file))
 
     # preprocess and save to numpy array
@@ -154,7 +155,7 @@ def getROI(inputDir):
     #### included for zone segmentation (not upsampled transversal image as input)
     tra_orig_roi = getROIFromOriginalTra(img_tra, size=size, start=start)
 
-    print('... normalize intensities ...')
+    #print('... normalize intensities ...')
     tra_orig_roi = utils.normalizeIntensitiesPercentile(tra_orig_roi)[0]
 
     # pad z-axis of transversal image to size of 32
@@ -165,7 +166,7 @@ def getROI(inputDir):
     tra_orig_roi = filter.Execute(tra_orig_roi)
 
     # save image
-    sitk.WriteImage(tra_orig_roi, os.path.join(inputDir, 'roi_tra.nrrd'))
+    # sitk.WriteImage(tra_orig_roi, os.path.join(inputDir, 'roi_tra.nrrd'))
 
     return tra_orig_roi
 
@@ -175,8 +176,9 @@ def getROIFromOriginalTra(original_tra, size, start):
 
     tra = original_tra
     tra = utils.resampleImage(tra, [0.5,0.5,3], sitk.sitkLinear,0)
-    tra = utils.sizeCorrectionImage(tra, factor=6, imgSize=28)
-    print('tra size: ', tra.GetSize())
+    #tra = utils.sizeCorrectionImage(tra, factor=6, imgSize=28)
+    tra = utils.crop_and_padd_sitk(tra, [168, 168, 32])
+    #print('tra size: ', tra.GetSize())
     tra = sitk.RegionOfInterest(tra, [size[0], size[1], int(size[2]/6)],
                                [start[0], start[1], int(start[2]/6)])
 
@@ -198,30 +200,7 @@ def preprocessImage(imgDir):
     roi_tra = getROI(imgDir)
     arr = createAnisotropicArray(input_img= roi_tra)
 
-    return arr
-
-def maskImage(upsampled_tra, cor, sag, GT):
-
-    res_cor = utils.resampleToReference(cor, upsampled_tra, sitk.sitkLinear, defaultValue=-1)
-    res_sag = utils.resampleToReference(sag, upsampled_tra, sitk.sitkLinear, defaultValue=-1)
-    mask_cor = sitk.BinaryThreshold(res_cor, -1, 0.01, 1, 0)
-    mask_sag = sitk.BinaryThreshold(res_sag, -1, 0.01, 1, 0)
-
-    # mask images
-    tra = sitk.Multiply(upsampled_tra, mask_cor)
-    tra = sitk.Multiply(tra, mask_sag)
-
-    cor = sitk.Multiply(res_cor, mask_sag)
-    sag = sitk.Multiply(res_sag, mask_cor)
-
-    GT = sitk.Multiply(GT, mask_cor)
-    GT = sitk.Multiply(GT, mask_sag)
-
-
-
-    return tra, cor, sag, GT
-
-
+    return roi_tra, arr
 
 
 if __name__ == '__main__':
