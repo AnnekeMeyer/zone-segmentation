@@ -169,57 +169,10 @@ def castImage(img, type):
 
     return out
 
-# corrects the size of an image to a multiple of the factor. Not fully tested yet
-def sizeCorrectionImage(img, factor, imgSize):
-# assumes that input image size is larger than minImgSize, except for z-dimension
-# factor is important in order to resample image by 1/factor (e.g. due to slice thickness) without any errors
-    size = img.GetSize()
-    correction = False
-    # check if bounding box size is multiple of 'factor' and correct if necessary
-    # x-direction
-    if (size[0])%factor != 0:
-        cX = factor-(size[0]%factor)
-        correction = True
-    else:
-        cX = 0
-    # y-direction
-    if (size[1])%factor != 0:
-        cY = factor-((size[1])%factor)
-        correction = True
-    else:
-        cY  = 0
 
-    if (size[2]) !=imgSize:
-        cZ = (imgSize-size[2])
-        # if z image size is larger than maxImgsSize, crop it (customized to the data at hand. Better if ROI extraction crops image)
-        if cZ <0:
-            print('image gets filtered')
-            cropFilter = sitk.CropImageFilter()
-            cropFilter.SetUpperBoundaryCropSize([0,0,int(math.floor(-cZ/2))])
-            cropFilter.SetLowerBoundaryCropSize([0,0,int(math.ceil(-cZ/2))])
-            img = cropFilter.Execute(img)
-            cz=0
-        else:
-            correction = True
-    else:
-        cZ = 0
-
-    # if correction is necessary, increase size of image with padding
-    if correction:
-        filter = sitk.ConstantPadImageFilter()
-        #print([math.ceil(cX/2), math.ceil(cY), math.ceil(cZ/2)])
-        filter.SetPadLowerBound([int(math.floor(cX/2)), int(math.floor(cY/2)), int(math.floor(cZ/2))])
-        filter.SetPadUpperBound([int(math.ceil(cX/2)), int(math.ceil(cY)), int(math.ceil(cZ/2))])
-        filter.SetConstant(-4)
-        outPadding = filter.Execute(img)
-        #print('outPaddingSize', outPadding.GetSize())
-        return outPadding
-
-    else:
-        return img
-
-
-def crop_and_padd_sitk(inputImage, newSize):
+# function for resizing the image with cropping and/or padding.
+# author of the function: Oleksii Bashkanov: https://github.com/bashkanov
+def crop_and_pad_sitk(inputImage, newSize):
 
     inSize = inputImage.GetSize()
     # print(inSize)
