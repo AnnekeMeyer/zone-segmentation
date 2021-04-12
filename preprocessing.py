@@ -53,7 +53,7 @@ def getCroppedIsotropicImgs(*imgs):
     # upsample transversal image to isotropic voxel size (isotropic transversal image coordinate system is used as reference coordinate system)
     tra_HR = utils.resampleImage(img_tra, [0.5, 0.5, 0.5], sitk.sitkLinear,0)
     # tra_HR = utils.sizeCorrectionImage(tra_HR, factor=6, imgSize=168)
-    tra_HR = utils.crop_and_padd_sitk(tra_HR, [168, 168, 168])
+    tra_HR = utils.crop_and_pad_sitk(tra_HR, [168, 168, 168])
 
     # resample coronal and sagittal to tra_HR space
     # resample coronal to tra_HR and obtain mask (voxels that are defined in coronal image )
@@ -177,7 +177,7 @@ def getROIFromOriginalTra(original_tra, size, start):
     tra = original_tra
     tra = utils.resampleImage(tra, [0.5,0.5,3], sitk.sitkLinear,0)
     #tra = utils.sizeCorrectionImage(tra, factor=6, imgSize=28)
-    tra = utils.crop_and_padd_sitk(tra, [168, 168, 32])
+    tra = utils.crop_and_pad_sitk(tra, [168, 168, 32])
     #print('tra size: ', tra.GetSize())
     tra = sitk.RegionOfInterest(tra, [size[0], size[1], int(size[2]/6)],
                                [start[0], start[1], int(start[2]/6)])
